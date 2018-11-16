@@ -34,6 +34,8 @@ def parse_word_data(data):
     parsed_synonyms = list()
     for word in syn_data.split():
         parsed_synonyms.append(word.replace(',', ' ').strip())
+    for index in range(len(parsed_synonyms)):
+        parsed_synonyms[index] = parsed_synonyms[index].strip('.')
     return keyword, parsed_synonyms
 
 
@@ -54,12 +56,57 @@ def init_synonyms(path):
             oneword_data += line
     return synons
 
+
 def posinit_synonyms(synonyms):
     """dict -> dict
     Return corrected synonyms dictionary without 'див.' reference.
     """
-    pass
+    for key in synonyms:
+        if 'див' in synonyms[key]:
+            try:
+                keyword_index = synonyms[key].index('див')
+                synonyms[key].extend(synonyms[synonyms[key][keyword_index + 1]])
+                synonyms[key].remove('див')
+            except:
+                synonyms[key].remove('див')
+    return synonyms
+
+
+def find_synonyms(root, synonyms):
+    """str -> list(str)
+    """
+    keys = list()
+    result = list()
+    for key in synonyms.keys():
+        if root in key:
+            keys.append(key)
+    result.extend(keys)
+    for key in keys:
+        for word in synonyms[key]:
+            if root in word:
+                result.append(word)
+    return result
+
+
+def get_word_root(word):
+    """str -> str
+    Return a main valid part of the word.
+    """
+    prefixes = ['роз', 'без', 'недо']
+    for prefix in prefixes:
+        if word.startswith(prefix):
+            word = word[len(prefix):]
+            break
+    return word[:len(word) // 2] if len(word) > 4 else word
 
 
 if __name__ == '__main__':
-    print(init_synonyms('syn.txt'))
+    # test_dict = init_synonyms('syn.txt')
+    # test_dict = posinit_synonyms(test_dict)
+    # with open('out.txt', 'w') as f:
+    #     for key in test_dict:
+    #         print(key, test_dict[key], file=f)
+
+    test_dict = init_synonyms('syn.txt')
+    test_dict = posinit_synonyms(test_dict)
+    print(find_synonyms(get_word_root('аналіз'), test_dict))
